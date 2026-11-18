@@ -1,53 +1,250 @@
-const form = document.getElementById("chatForm");
-const input = document.getElementById("messageInput");
-const messages = document.getElementById("messages");
-const welcome = document.getElementById("welcome");
 
-const WORKER_URL = "https://ham-ia-cerveau.yv574s6vcn.workers.dev";
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080b14">
+  <title>HAM IA</title>
 
-function addMessage(text, type) {
-  welcome.style.display = "none";
-  const bubble = document.createElement("div");
-  bubble.className = "message " + type;
-  bubble.textContent = text;
-  messages.appendChild(bubble);
-  window.scrollTo(0, document.body.scrollHeight);
-}
-
-form.addEventListener("submit", async function(event) {
-  event.preventDefault();
-
-  const text = input.value.trim();
-  if (!text) return;
-
-  addMessage(text, "user");
-  input.value = "";
-
-  const loading = document.createElement("div");
-  loading.className = "message assistant";
-  loading.textContent = "HAM IA réfléchit...";
-  messages.appendChild(loading);
-
-  try {
-    const response = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ message: text })
-    });
-
-    const data = await response.json();
-    loading.remove();
-
-    if (!response.ok || !data.reply) {
-      throw new Error(data.error || "Réponse invalide");
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    addMessage(data.reply, "assistant");
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #080b14;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
 
-  } catch (error) {
-    loading.remove();
-    addMessage("Erreur de connexion : " + error.message, "assistant");
-  }
-});
+    header {
+      padding: 22px 16px;
+      text-align: center;
+      border-bottom: 1px solid #20283b;
+      background: #0d1220;
+    }
+
+    .logo {
+      font-size: 30px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      color: #61b7ff;
+    }
+
+    .status {
+      color: #62d99b;
+      font-size: 13px;
+      margin-top: 7px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 850px;
+      margin: auto;
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #welcome {
+      text-align: center;
+      margin: auto;
+      padding: 35px 10px;
+    }
+
+    #welcome h1 {
+      font-size: 29px;
+      color: #61b7ff;
+    }
+
+    #welcome p {
+      color: #aab4c8;
+      line-height: 1.6;
+    }
+
+    #messages {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-bottom: 20px;
+    }
+
+    .message {
+      max-width: 90%;
+      padding: 14px 17px;
+      border-radius: 17px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: #1769aa;
+      border-bottom-right-radius: 4px;
+    }
+
+    .assistant {
+      align-self: flex-start;
+      background: #171f30;
+      border: 1px solid #28364d;
+      border-bottom-left-radius: 4px;
+    }
+
+    form {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      gap: 9px;
+      padding: 14px;
+      background: #0d1220;
+      border-top: 1px solid #20283b;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 15px;
+      border-radius: 25px;
+      border: 1px solid #34425b;
+      background: #171f30;
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      border: 0;
+      border-radius: 25px;
+      padding: 0 20px;
+      background: #1688df;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+    }
+
+    footer {
+      text-align: center;
+      padding: 10px;
+      color: #65728a;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">HAM IA</div>
+    <div class="status">● Assistant connecté</div>
+  </header>
+
+  <main>
+    <section id="welcome">
+      <h1>Bienvenue sur HAM IA</h1>
+      <p>Ton assistant intelligent est prêt.<br>
+      Pose-moi une question pour commencer.</p>
+    </section>
+
+    <div id="messages"></div>
+  </main>
+
+  <form id="chatForm">
+    <input
+      id="messageInput"
+      type="text"
+      placeholder="Écris ton message..."
+      autocomplete="off"
+      required
+    >
+    <button id="sendButton" type="submit">Envoyer</button>
+  </form>
+
+  <footer>HAM IA · Propulsé par Gemini</footer>
+
+  <script>
+    const form = document.getElementById("chatForm");
+    const input = document.getElementById("messageInput");
+    const messages = document.getElementById("messages");
+    const welcome = document.getElementById("welcome");
+    const sendButton = document.getElementById("sendButton");
+
+    const WORKER_URL =
+      "https://ham-ia-cerveau.yv574s6vcn.workers.dev";
+
+    function addMessage(text, type) {
+      welcome.style.display = "none";
+
+      const bubble = document.createElement("div");
+      bubble.className = "message " + type;
+      bubble.textContent = text;
+
+      messages.appendChild(bubble);
+      window.scrollTo(0, document.body.scrollHeight);
+
+      return bubble;
+    }
+
+    form.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      input.value = "";
+
+      sendButton.disabled = true;
+      const loading = addMessage("HAM IA réfléchit...", "assistant");
+
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: text
+          })
+        });
+
+        const data = await response.json();
+
+        loading.remove();
+
+        if (!response.ok || !data.reply) {
+          throw new Error(
+            data.error || "Le serveur n'a pas fourni de réponse."
+          );
+        }
+
+        addMessage(data.reply, "assistant");
+
+      } catch (error) {
+        loading.remove();
+
+        addMessage(
+          "Impossible de contacter HAM IA : " + error.message,
+          "assistant"
+        );
+
+      } finally {
+        sendButton.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+
+</body>
+</html>
