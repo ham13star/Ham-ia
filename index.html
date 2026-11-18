@@ -1,103 +1,193 @@
-export default {
-  async fetch(request, env) {
-    const cors = {
-      "Access-Control-Allow-Origin": "https://ham13star.github.io",
-      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
-    };
 
-    if (request.method === "OPTIONS") {
-      return new Response(null, { headers: cors });
-    }
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050814">
+<title>HAM IA — Intelligence artificielle</title>
 
-    if (request.method === "GET") {
-      return Response.json(
-        { message: "HAM IA OpenAI est prêt !" },
-        { headers: cors }
-      );
-    }
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#050814;color:#f4f7ff;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ min-height:100vh;overflow:hidden;
+}
+.app{height:100dvh;display:flex;flex-direction:column;max-width:950px;margin:auto}
+header{
+ padding:20px;display:flex;align-items:center;gap:13px;
+ border-bottom:1px solid #172344;background:#080e20;
+}
+.logo{
+ width:45px;height:45px;border-radius:15px;
+ background:linear-gradient(135deg,#087cff,#00e5ff);
+ box-shadow:0 0 25px #087cff88;
+ display:grid;place-items:center;font-size:24px;font-weight:900;
+}
+.brand{font-size:20px;font-weight:800;letter-spacing:2px}
+.status{font-size:12px;color:#52d9ff;margin-top:4px}
+main{flex:1;overflow-y:auto;padding:25px 18px}
+.welcome{text-align:center;margin:55px auto 35px;max-width:520px}
+.brain{
+ width:115px;height:115px;margin:auto auto 24px;border-radius:50%;
+ display:grid;place-items:center;font-size:53px;
+ background:radial-gradient(circle,#164d9c,#07152e 70%);
+ border:1px solid #168cff;
+ box-shadow:0 0 35px #087cff88, inset 0 0 30px #087cff55;
+ animation:pulse 3s infinite;
+}
+@keyframes pulse{
+ 50%{box-shadow:0 0 55px #087cffcc,inset 0 0 40px #087cff88}
+}
+h1{font-size:30px;margin:0 0 12px}
+.subtitle{color:#8fa4c9;line-height:1.6}
+.suggestions{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:25px}
+.suggestions button{
+ background:#101d37;border:1px solid #203d69;color:#cdeaff;
+ padding:11px 14px;border-radius:20px;font-size:13px;
+}
+#messages{display:flex;flex-direction:column;gap:15px}
+.message{
+ max-width:88%;padding:14px 16px;border-radius:17px;
+ line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.user{align-self:flex-end;background:linear-gradient(135deg,#0759bd,#087de8)}
+.ai{align-self:flex-start;background:#101a30;border:1px solid #203553}
+.error{color:#ff9a9a}
+.composer{
+ padding:14px 15px 20px;background:#080e20;
+ border-top:1px solid #172344;
+}
+form{
+ display:flex;gap:10px;max-width:850px;margin:auto;
+ background:#101a30;border:1px solid #25436d;
+ border-radius:18px;padding:8px;
+}
+textarea{
+ flex:1;resize:none;background:transparent;border:0;outline:0;
+ color:white;font:inherit;padding:12px;min-height:45px;max-height:120px;
+}
+textarea::placeholder{color:#7185a9}
+.send{
+ width:48px;border:0;border-radius:14px;
+ background:linear-gradient(135deg,#087cff,#00c9ff);
+ color:white;font-size:21px;font-weight:bold;
+}
+.send:disabled{opacity:.5}
+.foot{text-align:center;color:#607493;font-size:11px;margin-top:10px}
+@media(max-width:500px){
+ .welcome{margin-top:35px}
+ h1{font-size:26px}
+ main{padding:18px 13px}
+}
+</style>
+</head>
 
-    if (request.method !== "POST") {
-      return Response.json(
-        { error: "Méthode non autorisée" },
-        { status: 405, headers: cors }
-      );
-    }
+<body>
+<div class="app">
+<header>
+ <div class="logo">H</div>
+ <div>
+  <div class="brand">HAM IA</div>
+  <div class="status">● Assistant intelligent</div>
+ </div>
+</header>
 
-    try {
-      if (!env.OPENAI_API_KEY) {
-        throw new Error("Clé OpenAI manquante sur Cloudflare.");
-      }
+<main id="main">
+ <section class="welcome" id="welcome">
+  <div class="brain">🧠</div>
+  <h1>Bienvenue dans HAM IA</h1>
+  <p class="subtitle">
+   Votre assistant intelligent. Posez vos questions,
+   explorez vos idées et donnez vie à vos projets.
+  </p>
+  <div class="suggestions">
+   <button type="button" onclick="suggest('Explique-moi un sujet complexe simplement')">🧠 Apprendre</button>
+   <button type="button" onclick="suggest('Aide-moi à créer un projet')">🚀 Créer un projet</button>
+   <button type="button" onclick="suggest('Aide-moi à résoudre un problème')">💡 Résoudre un problème</button>
+  </div>
+ </section>
+ <div id="messages"></div>
+</main>
 
-      const body = await request.json();
-      const message = String(body.message || "").trim();
+<div class="composer">
+ <form id="chatForm">
+  <textarea id="messageInput" placeholder="Écris ton message à HAM IA..." rows="1" required></textarea>
+  <button class="send" id="sendButton" type="submit">➤</button>
+ </form>
+ <div class="foot">HAM IA · Futuriste Premium</div>
+</div>
+</div>
 
-      if (!message) {
-        return Response.json(
-          { error: "Message vide." },
-          { status: 400, headers: cors }
-        );
-      }
+<script>
+const WORKER_URL = "https://ham-ia-cerveau.yv574s6vcn.workers.dev";
 
-      if (message.length > 12000) {
-        return Response.json(
-          { error: "Message trop long." },
-          { status: 413, headers: cors }
-        );
-      }
+const form = document.getElementById("chatForm");
+const input = document.getElementById("messageInput");
+const messages = document.getElementById("messages");
+const main = document.getElementById("main");
+const sendButton = document.getElementById("sendButton");
+const welcome = document.getElementById("welcome");
 
-      const response = await fetch(
-        "https://api.openai.com/v1/responses",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${env.OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "gpt-5.4-mini",
-            instructions: `Tu es HAM IA, un assistant intelligent, sérieux,
-            polyvalent, pédagogue et naturel.
-            Tu réponds en français sauf demande contraire.
-            Tu expliques clairement, avec des détails adaptés au niveau
-            de la personne. Tu ne prétends jamais savoir ce que tu ignores.
-            Tu peux traiter des sujets complexes, sensibles ou controversés
-            avec objectivité. Pour les demandes dangereuses, tu expliques
-            les principes, les risques et les alternatives sûres, sans
-            fournir de mode opératoire facilitant un dommage réel.`,
-            input: message,
-            max_output_tokens: 1200,
-            store: false
-          })
-        }
-      );
+function suggest(text){
+ input.value = text;
+ input.focus();
+}
 
-      const data = await response.json();
+function addMessage(text, type){
+ const div = document.createElement("div");
+ div.className = "message " + type;
+ div.textContent = text;
+ messages.appendChild(div);
+ main.scrollTop = main.scrollHeight;
+ return div;
+}
 
-      if (!response.ok) {
-        return Response.json(
-          { error: data.error?.message || "Erreur OpenAI." },
-          { status: response.status, headers: cors }
-        );
-      }
+form.addEventListener("submit", async (event)=>{
+ event.preventDefault();
 
-      const reply = data.output_text ||
-        data.output?.flatMap(item => item.content || [])
-          .filter(item => item.type === "output_text")
-          .map(item => item.text)
-          .join("\n") ||
-        "Je n'ai pas réussi à générer une réponse.";
+ const text = input.value.trim();
+ if(!text || sendButton.disabled) return;
 
-      return Response.json(
-        { reply },
-        { headers: cors }
-      );
+ welcome.style.display = "none";
+ addMessage(text, "user");
+ input.value = "";
+ sendButton.disabled = true;
 
-    } catch (error) {
-      return Response.json(
-        { error: error.message || "Erreur serveur." },
-        { status: 500, headers: cors }
-      );
-    }
+ const waiting = addMessage("HAM IA réfléchit...", "ai");
+
+ try{
+  const response = await fetch(WORKER_URL,{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({message:text})
+  });
+
+  const data = await response.json();
+
+  if(!response.ok || !data.reply){
+   throw new Error(data.error || "Le serveur n'a pas répondu correctement.");
   }
-};
+
+  waiting.textContent = data.reply;
+
+ }catch(error){
+  waiting.textContent = "Je rencontre un problème de connexion : " + error.message;
+  waiting.classList.add("error");
+ }finally{
+  sendButton.disabled = false;
+  input.focus();
+  main.scrollTop = main.scrollHeight;
+ }
+});
+
+input.addEventListener("keydown",(event)=>{
+ if(event.key === "Enter" && !event.shiftKey){
+  event.preventDefault();
+  form.requestSubmit();
+ }
+});
+</script>
+</body>
+</html>
